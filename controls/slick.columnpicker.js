@@ -1,5 +1,5 @@
 (function ($) {
-  function SlickColumnPicker(columns, grid, options) {
+  function SlickColumnPicker(columns, grid, options, element, syncResizeLabel, autoResizeLabel ) {
     var $menu;
     var columnCheckboxes;
 
@@ -12,7 +12,7 @@
       grid.onColumnsReordered.subscribe(updateColumnOrder);
       options = $.extend({}, defaults, options);
 
-      $menu = $("<span class='slick-columnpicker' style='display:none;position:absolute;z-index:20;' />").appendTo(document.body);
+      $menu = $("<span class='slick-columnpicker' style='display:none;position:fixed;z-index:20;' />").appendTo(element);
 
       $menu.bind("mouseleave", function (e) {
         $(this).fadeOut(options.fadeSpeed)
@@ -53,7 +53,7 @@
       $li = $("<li />").appendTo($menu);
       $input = $("<input type='checkbox' />").data("option", "autoresize");
       $("<label />")
-          .text("Force fit columns")
+          .text(autoResizeLabel)
           .prepend($input)
           .appendTo($li);
       if (grid.getOptions().forceFitColumns) {
@@ -63,7 +63,7 @@
       $li = $("<li />").appendTo($menu);
       $input = $("<input type='checkbox' />").data("option", "syncresize");
       $("<label />")
-          .text("Synchronous resize")
+          .text(syncResizeLabel)
           .prepend($input)
           .appendTo($li);
       if (grid.getOptions().syncColumnCellResize) {
@@ -106,6 +106,7 @@
         } else {
           grid.setOptions({forceFitColumns:false});
         }
+		handleAutoResizechanged(e.target.checked);
         return;
       }
 
@@ -115,6 +116,7 @@
         } else {
           grid.setOptions({syncColumnCellResize:false});
         }
+		handleSyncResizechanged(e.target.checked);
         return;
       }
 
@@ -132,17 +134,37 @@
         }
 
         grid.setColumns(visibleColumns);
+		handleColumnsUpdate();
       }
     }
 
     function getAllColumns() {
       return columns;
     }
+	
+	var onAutoResizeChanged = function(autoResize){};
+	var onSyncResizeChanged = function(syncResize){};
+	var onColumnsUpdate = function(){};
+	
+	function handleColumnsUpdate(){
+		onColumnsUpdate();
+	}
+	
+	function handleAutoResizechanged(autoResize){
+		onAutoResizeChanged(autoResize);
+	}
+	
+	function handleSyncResizechanged(syncResize){
+		onSyncResizeChanged(syncResize);
+	}
 
     init();
 
     return {
       "getAllColumns": getAllColumns,
+	  "onAutoResizeChanged": function(val){onAutoResizeChanged = val},
+	  "onSyncResizeChanged": function(val){onSyncResizeChanged = val},
+	  "onColumnsUpdate": function(val){onColumnsUpdate = val},
       "destroy": destroy
     };
   }
