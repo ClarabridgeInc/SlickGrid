@@ -1949,7 +1949,7 @@ if (typeof Slick === "undefined") {
       }
     }
 
-    function render() {
+    function render(callback) {
       if (!initialized) { return; }
       var visible = getVisibleRange();
       var rendered = getRenderedRange();
@@ -1972,6 +1972,10 @@ if (typeof Slick === "undefined") {
       lastRenderedScrollTop = scrollTop;
       lastRenderedScrollLeft = scrollLeft;
       h_render = null;
+
+      if (callback) {
+        callback();
+      }
     }
 
     function handleHeaderRowScroll() {
