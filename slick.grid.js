@@ -182,6 +182,8 @@ if (typeof Slick === "undefined") {
     var rowNodeFromLastMouseWheelEvent;  // this node must not be deleted while inertial scrolling
     var zombieRowNodeFromLastMouseWheelEvent;  // node that was hidden instead of getting deleted
 
+    var columnResized = false;
+
 
     //////////////////////////////////////////////////////////////////////////////////////////////
     // Initialization
@@ -605,6 +607,10 @@ if (typeof Slick === "undefined") {
 
     function setupColumnSort() {
       $headers.click(function (e) {
+        if (columnResized) {
+          return;
+        }
+
         // temporary workaround for a bug in jQuery 1.7.1 (http://bugs.jquery.com/ticket/11328)
         e.metaKey = e.metaKey || e.ctrlKey;
 
@@ -858,6 +864,7 @@ if (typeof Slick === "undefined") {
               }
             })
             .bind("dragend", function (e, dd) {
+              columnResized = true;
               var newWidth;
               $(this).parent().removeClass("slick-header-column-active");
               for (j = 0; j < columnElements.length; j++) {
@@ -871,6 +878,9 @@ if (typeof Slick === "undefined") {
               updateCanvasWidth(true);
               render();
               trigger(self.onColumnsResized, {});
+              setTimeout(function() {
+                columnResized = false;
+              }, 300);
             });
       });
     }
@@ -2356,6 +2366,9 @@ if (typeof Slick === "undefined") {
     }
 
     function handleHeaderClick(e) {
+      if (columnResized) {
+        return;
+      }
       var $header = $(e.target).closest(".slick-header-column", ".slick-header-columns");
       var column = $header && $header.data("column");
       if (column) {
