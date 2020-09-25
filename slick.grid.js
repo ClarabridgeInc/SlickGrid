@@ -1051,7 +1051,7 @@ if (typeof Slick === "undefined") {
           shrinkLeeway = 0,
           total = 0,
           prevTotal,
-          availWidth = viewportHasVScroll ? viewportW - scrollbarDimensions.width : viewportW;
+          availWidth = Math.floor(viewportHasVScroll ? viewportW - scrollbarDimensions.width : viewportW);
 
       for (i = 0; i < columns.length; i++) {
         c = columns[i];
