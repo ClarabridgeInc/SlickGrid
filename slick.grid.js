@@ -318,6 +318,8 @@ if (typeof Slick === "undefined") {
             .bind("scroll", handleHeaderRowScroll);
         $focusSink.add($focusSink2)
             .bind("keydown", handleKeyDown);
+        $headers
+            .bind("keydown", handleKeyDown);
         $canvas
             .bind("keydown", handleKeyDown)
             .bind("click", handleClick)
@@ -562,13 +564,14 @@ if (typeof Slick === "undefined") {
       for (var i = 0; i < columns.length; i++) {
         var m = columns[i];
 
-        var header = $("<div class='ui-state-default slick-header-column' role='columnheader' />")
+        var header = $("<div class='ui-state-default slick-header-column' role='columnheader' tabindex='-1' />")
             .html("<span class='slick-column-name'>" + m.name + "</span>")
             .width(m.width - headerColumnWidthDiff)
             .attr("id", "" + uid + m.id)
             .attr("title", m.toolTip || "")
             .data("column", m)
             .addClass(m.headerCssClass || "")
+            .addClass("col" + i)
             .appendTo($headers);
 
         if (options.enableColumnReorder || m.sortable) {
@@ -674,6 +677,62 @@ if (typeof Slick === "undefined") {
           }
         }
       });
+    }
+
+    function keyboardSortColumn(e, col) {
+      if (!col.length) {
+        return;
+      }
+
+      var column = col.data("column");
+      if (column.sortable) {
+        if (!getEditorLock().commitCurrentEdit()) {
+          return;
+        }
+
+        var sortOpts = null;
+        var i = 0;
+        for (; i < sortColumns.length; i++) {
+          if (sortColumns[i].columnId == column.id) {
+            sortOpts = sortColumns[i];
+            sortOpts.sortAsc = !sortOpts.sortAsc;
+            break;
+          }
+        }
+
+        if (e.metaKey && options.multiColumnSort) {
+          if (sortOpts) {
+            sortColumns.splice(i, 1);
+          }
+        }
+        else {
+          if ((!e.shiftKey && !e.metaKey) || !options.multiColumnSort) {
+            sortColumns = [];
+          }
+
+          if (!sortOpts) {
+            sortOpts = { columnId: column.id, sortAsc: column.defaultSortAsc };
+            sortColumns.push(sortOpts);
+          } else if (sortColumns.length == 0) {
+            sortColumns.push(sortOpts);
+          }
+        }
+
+        setSortColumns(sortColumns);
+
+        if (!options.multiColumnSort) {
+          trigger(self.onSort, {
+            multiColumnSort: false,
+            sortCol: column,
+            sortAsc: sortOpts.sortAsc}, e);
+        } else {
+          trigger(self.onSort, {
+            multiColumnSort: true,
+            sortCols: $.map(sortColumns, function(col) {
+              return {sortCol: columns[getColumnIndex(col.columnId)], sortAsc: col.sortAsc };
+            })}, e);
+        }
+      }
     }
 
     function setupColumnReorder() {
@@ -2255,7 +2314,10 @@ if (typeof Slick === "undefined") {
           } else if (e.which == 9) {
             handled = navigateNext();
           } else if (e.which == 13) {
-            if (options.editable) {
+            var col = $(getActiveCellNode());
+            if (col.hasClass("slick-header-column")) {
+              keyboardSortColumn(e, col);
+            } else if (options.editable) {
               if (currentEditor) {
                 // adding new row
                 if (activeRow === getDataLength()) {
@@ -2415,6 +2477,15 @@ if (typeof Slick === "undefined") {
       return parseInt(cls[0].substr(1, cls[0].length - 1), 10);
     }
 
+    function getCellFromHeaderNode(cellNode) {
+      // read column number from .col<columnNumber> CSS class
+      var cls = /col\d+/.exec(cellNode.className);
+      if (!cls) {
+        throw "getCellFromHeaderNode: cannot get cell - " + cellNode.className;
+      }
+      return parseInt(cls[0].substr(3, cls[0].length - 3), 10);
+    }
+
     function getRowFromNode(rowNode) {
       for (var row in rowsCache) {
         if (rowsCache[row].rowNode === rowNode) {
@@ -2484,7 +2555,24 @@ if (typeof Slick === "undefined") {
       }
     }
 
+    function isElementInViewport (el) {
+      var rect = el.getBoundingClientRect();
+      return (
+          rect.top >= 0 &&
+          rect.left >= 0 &&
+          rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+          rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+      );
+    }
+
     function scrollCellIntoView(row, cell, doPaging) {
+      if (row === -1) {
+        var cellNode = getCellNode(row, cell);
+        if (cellNode && !isElementInViewport(cellNode)) {
+          cellNode.scrollIntoView();
+        }
+        return;
+      }
       scrollRowIntoView(row, doPaging);
 
       var colspan = getColspan(row, cell);
@@ -2510,12 +2598,16 @@ if (typeof Slick === "undefined") {
         if (rowsCache[activeRow]) {
           $(rowsCache[activeRow].rowNode).removeClass("active");
         }
+        if (activeRow === -1) {
+          $headers.removeClass("active");
+        }
       }
 
       var activeCellChanged = (activeCellNode !== newCell);
       activeCellNode = newCell;
+      var isHeaderCell = $(activeCellNode).hasClass("slick-header-column");
 
-      if (activeCellNode != null) {
+      if (activeCellNode != null && !isHeaderCell) {
         activeRow = getRowFromNode(activeCellNode.parentNode);
         activeCell = activePosX = getCellFromNode(activeCellNode);
 
@@ -2537,6 +2629,11 @@ if (typeof Slick === "undefined") {
             makeActiveCellEditable();
           }
         }
+      } else if (isHeaderCell) {
+        activeRow = -1;
+        activeCell = activePosX = getCellFromHeaderNode(activeCellNode);
+        $(activeCellNode).addClass("active");
+        $headers.addClass("active");
       } else {
         activeRow = activeCell = null;
       }
@@ -2827,7 +2924,7 @@ if (typeof Slick === "undefined") {
     }
 
     function getColspan(row, cell) {
-      var metadata = data.getItemMetadata && data.getItemMetadata(row);
+      var metadata = data.getItemMetadata && data.getItemMetadata(row < 0 ? 0 : row);
       if (!metadata || !metadata.columns) {
         return 1;
       }
@@ -2941,7 +3038,7 @@ if (typeof Slick === "undefined") {
     function gotoUp(row, cell, posX) {
       var prevCell;
       while (true) {
-        if (--row < 0) {
+        if (--row < -1) {
           return null;
         }
 
@@ -2963,7 +3060,8 @@ if (typeof Slick === "undefined") {
 
     function gotoNext(row, cell, posX) {
       if (row == null && cell == null) {
-        row = cell = posX = 0;
+        row = -1;
+        cell = posX = 0;
         if (canCellBeActive(row, cell)) {
           return {
             "row": row,
@@ -3013,7 +3111,7 @@ if (typeof Slick === "undefined") {
         if (pos) {
           break;
         }
-        if (--row < 0) {
+        if (--row < -1) {
           return null;
         }
 
@@ -3111,6 +3209,9 @@ if (typeof Slick === "undefined") {
         ensureCellNodesInRowsCache(row);
         return rowsCache[row].cellNodesByColumnIdx[cell];
       }
+      if (row === -1) {
+        return $($headers).find(".slick-header-column.col" + cell)[0];
+      }
       return null;
     }
 
@@ -3130,11 +3231,11 @@ if (typeof Slick === "undefined") {
 
     function canCellBeActive(row, cell) {
       if (!options.enableCellNavigation || row >= getDataLengthIncludingAddNew() ||
-          row < 0 || cell >= columns.length || cell < 0) {
+          row < -1 || cell >= columns.length || cell < 0) {
         return false;
       }
 
-      var rowMetadata = data.getItemMetadata && data.getItemMetadata(row);
+      var rowMetadata = data.getItemMetadata && data.getItemMetadata(row < 0 ? 0 : row);
       if (rowMetadata && typeof rowMetadata.focusable === "boolean") {
         return rowMetadata.focusable;
       }
