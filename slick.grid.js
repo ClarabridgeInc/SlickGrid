@@ -574,12 +574,12 @@ if (typeof Slick === "undefined") {
             .addClass("col" + i);
         if (m.aria) {
           Object.keys(m.aria).forEach(function(key) {
-            header.attr(key, m.aria[key])
+            header.attr('aria-' + key, m.aria[key])
           });
         }
         if (m.headerAria) {
           Object.keys(m.headerAria).forEach(function(key) {
-            header.attr(key, m.headerAria[key])
+            header.attr('aria-' + key, m.headerAria[key])
           });
         }
 
@@ -1228,11 +1228,18 @@ if (typeof Slick === "undefined") {
     function setSortColumns(cols) {
       sortColumns = cols;
 
-      var headerColumnEls = $headers.children();
+      var headerColumnEls = $headers.children();      
       headerColumnEls
-          .removeClass("slick-header-column-sorted")
-          .find(".slick-sort-indicator")
-              .removeClass("slick-sort-indicator-asc slick-sort-indicator-desc");
+        .removeClass("slick-header-column-sorted")
+        .find(".slick-sort-indicator")
+          .removeClass("slick-sort-indicator-asc slick-sort-indicator-desc")
+          .each(function() {
+            var columnHeader = this.parentElement;
+            if (columnHeader.innerText)
+              $(columnHeader)
+                .attr('title', 'Click to sort table by ' + columnHeader.innerText)
+                .attr('aria-sort', 'none');
+          });
 
       $.each(sortColumns, function(i, col) {
         if (col.sortAsc == null) {
@@ -1244,6 +1251,11 @@ if (typeof Slick === "undefined") {
               .addClass("slick-header-column-sorted")
               .find(".slick-sort-indicator")
                   .addClass(col.sortAsc ? "slick-sort-indicator-asc" : "slick-sort-indicator-desc");
+            
+          headerColumnEls
+            .eq(columnIndex)
+            .attr('title', 'Table sorted by ' + headerColumnEls[columnIndex].innerText + (col.sortAsc ? ' ascending' : ' descending'))
+            .attr('aria-sort', col.sortAsc ? 'ascending' : 'descending');
         }
       });
     }
@@ -1557,12 +1569,12 @@ if (typeof Slick === "undefined") {
       var additionalAria = '';
       if (m.aria) {
         Object.keys(m.aria).forEach(function(key) {
-          additionalAria = additionalAria + key + '=' + m.aria[key] + ' ';
+          additionalAria = additionalAria + 'aria-' + key + '=' + m.aria[key] + ' ';
         });
       }
       if (m.cellAria) {
         Object.keys(m.cellAria).forEach(function(key) {
-          additionalAria = additionalAria + key + '=' + m.cellAria[key] + ' ';
+          additionalAria = additionalAria + 'aria-' + key + '=' + m.cellAria[key] + ' ';
         });
       }
       stringArray.push("<div class='" + cellCss + "' aria-describedby='" + uid + m.id + "' tabindex='-1' role='gridcell' " + additionalAria + ">");
