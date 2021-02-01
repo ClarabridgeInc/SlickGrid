@@ -1519,7 +1519,11 @@ if (typeof Slick === "undefined") {
         rowCss += " " + metadata.cssClasses;
       }
 
-      stringArray.push("<div class='ui-widget-content " + rowCss + "' style='top:" + getRowTop(row) + "px' role='row'>");
+      var ariaSelected = data.getItem(row) && data.getItem(row).selected ?
+        " aria-selected='true'" :
+        " aria-selected='false'";
+
+      stringArray.push("<div class='ui-widget-content " + rowCss + "' style='top:" + getRowTop(row) + "px' role='row'" + ariaSelected + ">");
 
       var colspan, m;
       for (var i = 0, ii = columns.length; i < ii; i++) {
