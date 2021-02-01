@@ -567,12 +567,23 @@ if (typeof Slick === "undefined") {
         var header = $("<div class='ui-state-default slick-header-column' role='columnheader' tabindex='-1' />")
             .html("<span class='slick-column-name'>" + m.name + "</span>")
             .width(m.width - headerColumnWidthDiff)
-            .attr("id", "" + uid + m.id)
+            .attr("id", "" + uid + m.id)            
             .attr("title", m.toolTip || "")
             .data("column", m)
             .addClass(m.headerCssClass || "")
-            .addClass("col" + i)
-            .appendTo($headers);
+            .addClass("col" + i);
+        if (m.aria) {
+          Object.keys(m.aria).forEach(function(key) {
+            header.attr(key, m.aria[key])
+          });
+        }
+        if (m.headerAria) {
+          Object.keys(m.headerAria).forEach(function(key) {
+            header.attr(key, m.headerAria[key])
+          });
+        }
+
+        header.appendTo($headers);
 
         if (options.enableColumnReorder || m.sortable) {
           header
@@ -1543,7 +1554,18 @@ if (typeof Slick === "undefined") {
         }
       }
 
-      stringArray.push("<div class='" + cellCss + "' aria-describedby='" + uid + m.id + "' tabindex='-1' role='gridcell'>");
+      var additionalAria = '';
+      if (m.aria) {
+        Object.keys(m.aria).forEach(function(key) {
+          additionalAria = additionalAria + key + '=' + m.aria[key] + ' ';
+        });
+      }
+      if (m.cellAria) {
+        Object.keys(m.cellAria).forEach(function(key) {
+          additionalAria = additionalAria + key + '=' + m.cellAria[key] + ' ';
+        });
+      }
+      stringArray.push("<div class='" + cellCss + "' aria-describedby='" + uid + m.id + "' tabindex='-1' role='gridcell' " + additionalAria + ">");
 
       // if there is a corresponding row (if not, this is the Add New row or this data hasn't been loaded yet)
       if (item) {
