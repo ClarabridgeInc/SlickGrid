@@ -1237,7 +1237,7 @@ if (typeof Slick === "undefined") {
             var columnHeader = this.parentElement;
             if (columnHeader.innerText)
               $(columnHeader)
-                .attr('title', 'Click to sort table by ' + columnHeader.innerText)
+                .attr('title', options.localization.getSortByColumnPrompt(columnHeader.innerText))
                 .attr('aria-sort', 'none');
           });
 
@@ -1254,7 +1254,7 @@ if (typeof Slick === "undefined") {
             
           headerColumnEls
             .eq(columnIndex)
-            .attr('title', 'Table sorted by ' + headerColumnEls[columnIndex].innerText + (col.sortAsc ? ' ascending' : ' descending'))
+            .attr('title', options.localization.getColumnSortedTitle(headerColumnEls[columnIndex].innerText, col.sortAsc))
             .attr('aria-sort', col.sortAsc ? 'ascending' : 'descending');
         }
       });
