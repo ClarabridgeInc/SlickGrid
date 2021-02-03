@@ -1581,6 +1581,9 @@ if (typeof Slick === "undefined") {
           additionalAttributes = additionalAttributes + key + '=' + m.cellAttributes[key] + ' ';
         });
       }
+      if (m.customCellAttributes) {
+        additionalAttributes += m.customCellAttributes(row, cell, value, m, item);
+      }
       stringArray.push("<div class='" + cellCss + "' aria-describedby='" + uid + m.id + "' tabindex='-1' role='gridcell' " + additionalAttributes + ">");
 
       // if there is a corresponding row (if not, this is the Add New row or this data hasn't been loaded yet)
