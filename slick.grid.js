@@ -572,14 +572,14 @@ if (typeof Slick === "undefined") {
             .data("column", m)
             .addClass(m.headerCssClass || "")
             .addClass("col" + i);
-        if (m.aria) {
-          Object.keys(m.aria).forEach(function(key) {
-            header.attr('aria-' + key, m.aria[key])
+        if (m.attributes) {
+          Object.keys(m.attributes).forEach(function(key) {
+            header.attr(key, m.attributes[key])
           });
         }
-        if (m.headerAria) {
-          Object.keys(m.headerAria).forEach(function(key) {
-            header.attr('aria-' + key, m.headerAria[key])
+        if (m.headerAttributes) {
+          Object.keys(m.headerAttributes).forEach(function(key) {
+            header.attr(key, m.headerAttributes[key])
           });
         }
 
@@ -1570,18 +1570,18 @@ if (typeof Slick === "undefined") {
         }
       }
 
-      var additionalAria = '';
-      if (m.aria) {
-        Object.keys(m.aria).forEach(function(key) {
-          additionalAria = additionalAria + 'aria-' + key + '=' + m.aria[key] + ' ';
+      var additionalAttributes = '';
+      if (m.attributes) {
+        Object.keys(m.attributes).forEach(function(key) {
+          additionalAttributes = additionalAttributes + key + '=' + m.attributes[key] + ' ';
         });
       }
-      if (m.cellAria) {
-        Object.keys(m.cellAria).forEach(function(key) {
-          additionalAria = additionalAria + 'aria-' + key + '=' + m.cellAria[key] + ' ';
+      if (m.cellAttributes) {
+        Object.keys(m.cellAttributes).forEach(function(key) {
+          additionalAttributes = additionalAttributes + key + '=' + m.cellAttributes[key] + ' ';
         });
       }
-      stringArray.push("<div class='" + cellCss + "' aria-describedby='" + uid + m.id + "' tabindex='-1' role='gridcell' " + additionalAria + ">");
+      stringArray.push("<div class='" + cellCss + "' aria-describedby='" + uid + m.id + "' tabindex='-1' role='gridcell' " + additionalAttributes + ">");
 
       // if there is a corresponding row (if not, this is the Add New row or this data hasn't been loaded yet)
       if (item) {
