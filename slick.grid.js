@@ -567,12 +567,22 @@ if (typeof Slick === "undefined") {
         var header = $("<div class='ui-state-default slick-header-column' role='columnheader' tabindex='-1' />")
             .html("<span class='slick-column-name'>" + m.name + "</span>")
             .width(m.width - headerColumnWidthDiff)
-            .attr("id", "" + uid + m.id)
+            .attr("id", "" + uid + m.id)            
             .attr("title", m.toolTip || "")
             .data("column", m)
             .addClass(m.headerCssClass || "")
-            .addClass("col" + i)
-            .appendTo($headers);
+            .addClass("col" + i);
+
+        m.attributes = m.attributes || {};
+        m.headerAttributes = m.headerAttributes || {};
+        var additionalAttributes = Object.assign({}, m.attributes, m.headerAttributes);
+        if (additionalAttributes) {
+          Object.keys(additionalAttributes).forEach(function(key) {
+            header.attr(key, additionalAttributes[key])
+          });
+        }
+
+        header.appendTo($headers);
 
         if (options.enableColumnReorder || m.sortable) {
           header
@@ -1217,11 +1227,18 @@ if (typeof Slick === "undefined") {
     function setSortColumns(cols) {
       sortColumns = cols;
 
-      var headerColumnEls = $headers.children();
+      var headerColumnEls = $headers.children();      
       headerColumnEls
-          .removeClass("slick-header-column-sorted")
-          .find(".slick-sort-indicator")
-              .removeClass("slick-sort-indicator-asc slick-sort-indicator-desc");
+        .removeClass("slick-header-column-sorted")
+        .find(".slick-sort-indicator")
+          .removeClass("slick-sort-indicator-asc slick-sort-indicator-desc")
+          .each(function() {
+            var columnHeader = this.parentElement;
+            if (columnHeader.innerText)
+              $(columnHeader)
+                .attr('title', options.localization.getSortByColumnPrompt(columnHeader.innerText))
+                .attr('aria-sort', 'none');
+          });
 
       $.each(sortColumns, function(i, col) {
         if (col.sortAsc == null) {
@@ -1233,6 +1250,11 @@ if (typeof Slick === "undefined") {
               .addClass("slick-header-column-sorted")
               .find(".slick-sort-indicator")
                   .addClass(col.sortAsc ? "slick-sort-indicator-asc" : "slick-sort-indicator-desc");
+            
+          headerColumnEls
+            .eq(columnIndex)
+            .attr('title', options.localization.getColumnSortedTitle(headerColumnEls[columnIndex].innerText, col.sortAsc))
+            .attr('aria-sort', col.sortAsc ? 'ascending' : 'descending');
         }
       });
     }
@@ -1496,7 +1518,11 @@ if (typeof Slick === "undefined") {
         rowCss += " " + metadata.cssClasses;
       }
 
-      stringArray.push("<div class='ui-widget-content " + rowCss + "' style='top:" + getRowTop(row) + "px' role='row'>");
+      var ariaSelected = data.getItem(row) && data.getItem(row).selected ?
+        " aria-selected='true'" :
+        " aria-selected='false'";
+
+      stringArray.push("<div class='ui-widget-content " + rowCss + "' style='top:" + getRowTop(row) + "px' role='row'" + ariaSelected + ">");
 
       var colspan, m;
       for (var i = 0, ii = columns.length; i < ii; i++) {
@@ -1543,7 +1569,21 @@ if (typeof Slick === "undefined") {
         }
       }
 
-      stringArray.push("<div class='" + cellCss + "' aria-describedby='" + uid + m.id + "' tabindex='-1' role='gridcell'>");
+      var columnLevelAttributes = Object.assign({}, m.attributes);
+      var cellLevelAttributes = Object.assign({}, m.cellAttributes);
+      var additionalAttributes = Object.assign(columnLevelAttributes, cellLevelAttributes);
+      if (m.customCellAttributes) {
+        additionalAttributes = Object.assign(additionalAttributes, m.customCellAttributes(row, cell, value, m, item));
+      }
+
+
+      var additionalAttributesString = '';
+      if (additionalAttributes) {
+        Object.keys(additionalAttributes).forEach(function(key) {
+          additionalAttributesString = additionalAttributesString + key + '="' + additionalAttributes[key] + '" ';
+        });
+      }
+      stringArray.push("<div class='" + cellCss + "' aria-describedby='" + uid + m.id + "' tabindex='-1' role='gridcell' " + additionalAttributesString + ">");
 
       // if there is a corresponding row (if not, this is the Add New row or this data hasn't been loaded yet)
       if (item) {
