@@ -575,7 +575,7 @@ if (typeof Slick === "undefined") {
 
         m.attributes = m.attributes || {};
         m.headerAttributes = m.headerAttributes || {};
-        var additionalAttributes = Object.assign(m.attributes, m.headerAttributes);
+        var additionalAttributes = Object.assign({}, m.attributes, m.headerAttributes);
         if (additionalAttributes) {
           Object.keys(additionalAttributes).forEach(function(key) {
             header.attr(key, additionalAttributes[key])
@@ -1569,17 +1569,18 @@ if (typeof Slick === "undefined") {
         }
       }
 
-      m.attributes = m.attributes || {};
-      m.cellAttributes = m.cellAttributes || {};
-      var additionalAttributes = Object.assign(m.attributes, m.cellAttributes);
+      var columnLevelAttributes = Object.assign({}, m.attributes);
+      var cellLevelAttributes = Object.assign({}, m.cellAttributes);
+      var additionalAttributes = Object.assign(columnLevelAttributes, cellLevelAttributes);
       if (m.customCellAttributes) {
         additionalAttributes = Object.assign(additionalAttributes, m.customCellAttributes(row, cell, value, m, item));
       }
 
+
       var additionalAttributesString = '';
       if (additionalAttributes) {
         Object.keys(additionalAttributes).forEach(function(key) {
-          additionalAttributesString = additionalAttributesString + key + '=' + additionalAttributes[key] + ' ';
+          additionalAttributesString = additionalAttributesString + key + '="' + additionalAttributes[key] + '" ';
         });
       }
       stringArray.push("<div class='" + cellCss + "' aria-describedby='" + uid + m.id + "' tabindex='-1' role='gridcell' " + additionalAttributesString + ">");
