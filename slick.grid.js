@@ -1234,10 +1234,14 @@ if (typeof Slick === "undefined") {
           .removeClass("slick-sort-indicator-asc slick-sort-indicator-desc")
           .each(function() {
             var columnHeader = this.parentElement;
-            if (columnHeader.innerText)
+            if (columnHeader.innerText) {
+              var titleText = options && options.localization && options.localization.getSortByColumnPrompt ?
+                options.localization.getSortByColumnPrompt(columnHeader.innerText) :
+                'Click to sort by ' + columnHeader.innerText;
               $(columnHeader)
-                .attr('title', options.localization.getSortByColumnPrompt(columnHeader.innerText))
+                .attr('title', titleText)
                 .attr('aria-sort', 'none');
+            }
           });
 
       $.each(sortColumns, function(i, col) {
@@ -1250,10 +1254,14 @@ if (typeof Slick === "undefined") {
               .addClass("slick-header-column-sorted")
               .find(".slick-sort-indicator")
                   .addClass(col.sortAsc ? "slick-sort-indicator-asc" : "slick-sort-indicator-desc");
-            
+          
+          var titleText = options && options.localization && options.localization.getColumnSortedTitle ?
+            options.localization.getColumnSortedTitle(headerColumnEls[columnIndex].innerText, col.sortAsc) :
+            'Sorted by ' + headerColumnEls[columnIndex].innerText + (col.sortAsc ? ' ascending' : ' descending');
+          
           headerColumnEls
             .eq(columnIndex)
-            .attr('title', options.localization.getColumnSortedTitle(headerColumnEls[columnIndex].innerText, col.sortAsc))
+            .attr('title', titleText)
             .attr('aria-sort', col.sortAsc ? 'ascending' : 'descending');
         }
       });
